@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>TeaTapler OS — Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Montserrat',sans-serif}
+body{background:#0A0F0E;color:#F2EFE7;display:flex;min-height:100vh}
+
+/* ── SIDEBAR ── */
+#sidebar{
+  width:220px;min-width:220px;background:#050E0D;
+  border-right:1px solid rgba(176,138,60,.1);
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;bottom:0;z-index:100;
+}
+.sb-logo{
+  padding:24px 20px;border-bottom:1px solid rgba(176,138,60,.08);
+  display:flex;align-items:center;gap:10px;
+}
+.sb-logo img{width:32px;height:32px;object-fit:contain}
+.sb-logo-text{font-family:'Playfair Display',serif;font-size:14px;color:#F2EFE7;letter-spacing:2px}
+.sb-logo-sub{font-size:8px;color:#B08A3C;letter-spacing:3px;text-transform:uppercase;margin-top:2px}
+.sb-nav{flex:1;padding:16px 0;overflow-y:auto}
+.sb-section{font-size:8px;color:rgba(242,239,231,.2);letter-spacing:3px;text-transform:uppercase;padding:12px 20px 6px}
+.sb-link{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 20px;font-size:11px;color:rgba(242,239,231,.5);
+  cursor:pointer;transition:all .2s;border-left:2px solid transparent;
+  font-weight:500;letter-spacing:.5px;
+}
+.sb-link:hover{background:rgba(176,138,60,.06);color:#F2EFE7;border-left-color:rgba(176,138,60,.3)}
+.sb-link.active{background:rgba(176,138,60,.1);color:#B08A3C;border-left-color:#B08A3C}
+.sb-link .icon{font-size:14px;width:18px;text-align:center}
+.sb-footer{padding:16px 20px;border-top:1px solid rgba(176,138,60,.08)}
+.sb-back{
+  display:flex;align-items:center;gap:8px;
+  font-size:10px;color:rgba(242,239,231,.3);
+  cursor:pointer;text-decoration:none;transition:color .2s;
+  letter-spacing:1px;
+}
+.sb-back:hover{color:#B08A3C}
+
+/* ── MAIN ── */
+#main{
+  margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh;
+}
+#topbar{
+  background:#0A0F0E;border-bottom:1px solid rgba(176,138,60,.08);
+  padding:0 32px;height:56px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:50;
+}
+.topbar-title{font-family:'Playfair Display',serif;font-size:18px;color:#F2EFE7;font-weight:400}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.topbar-badge{
+  background:rgba(176,138,60,.12);border:1px solid rgba(176,138,60,.2);
+  color:#B08A3C;padding:4px 12px;font-size:9px;letter-spacing:2px;text-transform:uppercase;font-weight:700;
+}
+.topbar-dot{width:8px;height:8px;border-radius:50%;background:#4ADE80;box-shadow:0 0 8px rgba(74,222,128,.6)}
+
+/* ── CONTENT AREA ── */
+#content{padding:32px;flex:1}
+
+/* ── PANELS ── */
+.panel{display:none}.panel.active{display:block}
+
+/* ── STAT CARDS ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.stat-card{
+  background:#0F1A19;border:1px solid rgba(176,138,60,.1);
+  padding:20px 22px;position:relative;overflow:hidden;
+}
+.stat-card::after{
+  content:'';position:absolute;bottom:0;right:0;
+  width:60px;height:60px;border-radius:50%;
+  border:1px solid rgba(176,138,60,.06);transform:translate(20px,20px);
+}
+.stat-num{font-family:'Playfair Display',serif;font-size:32px;color:#B08A3C;font-weight:600;line-height:1}
+.stat-label{font-size:9px;color:rgba(242,239,231,.35);letter-spacing:2px;text-transform:uppercase;margin-top:6px;font-weight:600}
+.stat-delta{font-size:10px;color:#4ADE80;margin-top:8px}
+.stat-icon{position:absolute;top:18px;right:18px;font-size:22px;opacity:.3}
+
+/* ── TABLE ── */
+.table-wrap{background:#0F1A19;border:1px solid rgba(176,138,60,.1);}
+.table-head{
+  padding:16px 20px;border-bottom:1px solid rgba(176,138,60,.08);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.table-head-title{font-size:11px;color:#B08A3C;letter-spacing:2px;text-transform:uppercase;font-weight:700}
+.t-export{
+  background:rgba(176,138,60,.1);border:1px solid rgba(176,138,60,.2);
+  color:#B08A3C;padding:6px 14px;font-size:9px;letter-spacing:2px;
+  font-family:'Montserrat',sans-serif;text-transform:uppercase;font-weight:700;cursor:pointer;transition:all .2s;
+}
+.t-export:hover{background:#B08A3C;color:#0A0F0E}
+table{width:100%;border-collapse:collapse}
+th{
+  text-align:left;padding:10px 16px;
+  font-size:8px;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(242,239,231,.3);font-weight:600;
+  border-bottom:1px solid rgba(176,138,60,.06);
+}
+td{
+  padding:12px 16px;font-size:11px;color:rgba(242,239,231,.75);
+  border-bottom:1px solid rgba(242,239,231,.03);
+}
+tr:hover td{background:rgba(176,138,60,.03);color:#F2EFE7}
+.td-badge{
+  display:inline-block;padding:2px 10px;font-size:8px;letter-spacing:1.5px;
+  text-transform:uppercase;font-weight:700;
+}
+.bd-new{background:rgba(74,222,128,.12);color:#4ADE80}
+.bd-vip{background:rgba(176,138,60,.15);color:#B08A3C}
+.bd-nl{background:rgba(15,106,99,.2);color:#4DCAC0}
+.bd-corp{background:rgba(139,92,246,.15);color:#A78BFA}
+.empty-state{
+  padding:48px 20px;text-align:center;
+  color:rgba(242,239,231,.2);font-size:12px;
+}
+.empty-state .big{font-size:36px;margin-bottom:12px}
+
+/* ── WEBSITE STATUS ── */
+.status-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:28px}
+.status-card{
+  background:#0F1A19;border:1px solid rgba(176,138,60,.1);padding:20px 22px;
+}
+.status-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(242,239,231,.04)}
+.status-row:last-child{border-bottom:none}
+.status-key{font-size:11px;color:rgba(242,239,231,.4)}
+.status-val{font-size:11px;color:#F2EFE7;font-weight:500}
+.dot-green{display:inline-block;width:7px;height:7px;border-radius:50%;background:#4ADE80;margin-right:6px;box-shadow:0 0 6px rgba(74,222,128,.6)}
+.dot-amber{display:inline-block;width:7px;height:7px;border-radius:50%;background:#FBBF24;margin-right:6px}
+.dot-red{display:inline-block;width:7px;height:7px;border-radius:50%;background:#F87171;margin-right:6px}
+.dot-grey{display:inline-block;width:7px;height:7px;border-radius:50%;background:rgba(242,239,231,.2);margin-right:6px}
+
+/* ── SECTION HEADING ── */
+.section-head{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.section-line{width:32px;height:1px;background:#B08A3C}
+.section-title{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:#B08A3C;font-weight:700}
+
+/* ── SETTINGS FORM ── */
+.setting-row{
+  background:#0F1A19;border:1px solid rgba(176,138,60,.08);
+  padding:20px 22px;margin-bottom:12px;
+  display:flex;align-items:flex-start;justify-content:space-between;gap:24px;
+}
+.setting-info{flex:1}
+.setting-label{font-size:12px;color:#F2EFE7;font-weight:600;margin-bottom:4px}
+.setting-desc{font-size:10px;color:rgba(242,239,231,.3);line-height:1.6}
+.setting-input{
+  background:rgba(242,239,231,.05);border:1px solid rgba(176,138,60,.2);
+  color:#F2EFE7;padding:8px 12px;font-family:'Montserrat',sans-serif;font-size:12px;
+  outline:none;min-width:220px;
+}
+.setting-input:focus{border-color:#B08A3C}
+.toggle{position:relative;width:44px;height:24px;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{
+  position:absolute;inset:0;background:rgba(242,239,231,.12);
+  transition:.3s;border-radius:24px;
+}
+.toggle input:checked + .toggle-slider{background:#B08A3C}
+.toggle-slider::before{
+  content:'';position:absolute;width:18px;height:18px;
+  background:#F2EFE7;border-radius:50%;left:3px;top:3px;transition:.3s;
+}
+.toggle input:checked + .toggle-slider::before{transform:translateX(20px)}
+.save-btn{
+  background:#B08A3C;color:#0A0F0E;border:none;
+  padding:10px 28px;font-family:'Montserrat',sans-serif;font-size:9px;
+  letter-spacing:2px;text-transform:uppercase;font-weight:700;cursor:pointer;
+  transition:all .2s;margin-top:12px;
+}
+.save-btn:hover{background:#C9A55A}
+
+/* ── LOGIN ── */
+#login-screen{
+  position:fixed;inset:0;background:#050E0D;
+  display:flex;align-items:center;justify-content:center;
+  z-index:9999;
+}
+.login-box{
+  background:#0F1A19;border:1px solid rgba(176,138,60,.2);
+  padding:48px 40px;width:360px;text-align:center;
+}
+.login-logo{width:60px;height:60px;object-fit:contain;margin-bottom:20px;filter:drop-shadow(0 0 12px rgba(176,138,60,.4))}
+.login-title{font-family:'Playfair Display',serif;font-size:22px;color:#F2EFE7;margin-bottom:4px}
+.login-sub{font-size:9px;color:rgba(242,239,231,.3);letter-spacing:2px;text-transform:uppercase;margin-bottom:28px}
+.login-input{
+  width:100%;background:rgba(242,239,231,.05);
+  border:1px solid rgba(176,138,60,.2);border-bottom:1px solid rgba(176,138,60,.4);
+  color:#F2EFE7;padding:12px 14px;font-family:'Montserrat',sans-serif;font-size:13px;
+  outline:none;margin-bottom:12px;
+}
+.login-input:focus{border-color:#B08A3C}
+.login-btn{
+  width:100%;background:#B08A3C;color:#0A0F0E;border:none;
+  padding:13px;font-family:'Montserrat',sans-serif;
+  font-size:10px;letter-spacing:3px;text-transform:uppercase;font-weight:700;
+  cursor:pointer;transition:all .2s;margin-top:4px;
+}
+.login-btn:hover{background:#C9A55A}
+.login-err{font-size:11px;color:#F87171;margin-top:10px;display:none}
+.login-hint{font-size:9px;color:rgba(242,239,231,.15);margin-top:20px}
+
+/* ── SCROLL ── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#B08A3C33;border-radius:4px}
+
+/* ── TOAST ── */
+#toast{
+  position:fixed;bottom:24px;right:24px;
+  background:#0F6A63;border:1px solid rgba(176,138,60,.3);
+  color:#F2EFE7;padding:12px 20px;font-size:11px;
+  display:none;z-index:9999;animation:slideUp .3s ease;
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <img class="login-logo" src="data:image/jpeg;base64,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" alt="TeaTapler"/>
+    <div class="login-title">TeaTapler OS</div>
+    <div class="login-sub">Admin Dashboard</div>
+    <input class="login-input" type="text" id="lg-user" placeholder="Username"/>
+    <input class="login-input" type="password" id="lg-pass" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="login-btn" onclick="doLogin()">Enter Dashboard</button>
+    <div class="login-err" id="lg-err">Incorrect credentials. Try again.</div>
+    <div class="login-hint">Default: admin / teatapler2026</div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="sb-logo">
+    <img src="data:image/jpeg;base64,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" alt="TeaTapler"/>
+    <div><div class="sb-logo-text">TeaTapler</div><div class="sb-logo-sub">OS v1.0</div></div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-section">Overview</div>
+    <div class="sb-link active" onclick="showPanel('dashboard')"><span class="icon">📊</span> Dashboard</div>
+    <div class="sb-link" onclick="showPanel('preorders')"><span class="icon">🍃</span> Pre-Orders</div>
+    <div class="sb-link" onclick="showPanel('community')"><span class="icon">👥</span> Community</div>
+    
+    <div class="sb-section">Website</div>
+    <div class="sb-link" onclick="showPanel('status')"><span class="icon">🌐</span> Site Status</div>
+    <div class="sb-link" onclick="showPanel('deploy')"><span class="icon">🚀</span> Deploy Guide</div>
+    
+    <div class="sb-section">Settings</div>
+    <div class="sb-link" onclick="showPanel('settings')"><span class="icon">⚙️</span> Settings</div>
+    <div class="sb-link" onclick="showPanel('export')"><span class="icon">📥</span> Export Data</div>
+  </nav>
+  <div class="sb-footer">
+    <a href="TeaTapler_Website.html" class="sb-back">← Back to Website</a>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="topbar">
+    <span class="topbar-title">TeaTapler OS</span>
+    <div class="topbar-right">
+      <span class="topbar-badge">Admin</span>
+      <div class="topbar-dot" title="System Online"></div>
+    </div>
+  </div>
+  <div id="content">
+
+    <!-- DASHBOARD -->
+    <div class="panel active" id="panel-dashboard">
+      <div class="section-head"><div class="section-line"></div><span class="section-title">Overview</span></div>
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-icon">🍃</div>
+          <div class="stat-num" id="s-preorders">0</div>
+          <div class="stat-label">Pre-Orders</div>
+          <div class="stat-delta">↑ Founding Members</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-num" id="s-vip">0</div>
+          <div class="stat-label">VIP Waitlist</div>
+          <div class="stat-delta">↑ Inner Circle</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📜</div>
+          <div class="stat-num" id="s-nl">0</div>
+          <div class="stat-label">Reserve Letter</div>
+          <div class="stat-delta">↑ Subscribers</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🎁</div>
+          <div class="stat-num" id="s-corp">0</div>
+          <div class="stat-label">Corp. Inquiries</div>
+          <div class="stat-delta">↑ Business</div>
+        </div>
+      </div>
+
+      <div class="section-head" style="margin-top:8px"><div class="section-line"></div><span class="section-title">Recent Pre-Orders</span></div>
+      <div class="table-wrap">
+        <div class="table-head">
+          <span class="table-head-title">Latest Reservations</span>
+          <button class="t-export" onclick="showPanel('export')">Export CSV</button>
+        </div>
+        <table>
+          <thead><tr>
+            <th>Name</th><th>Email</th><th>Country</th><th>Interest</th><th>Date</th><th>Type</th>
+          </tr></thead>
+          <tbody id="dash-table"><tr><td colspan="6" class="empty-state"><div class="big">🍃</div>No pre-orders yet. Share your website to start collecting.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PRE-ORDERS -->
+    <div class="panel" id="panel-preorders">
+      <div class="section-head"><div class="section-line"></div><span class="section-title">All Pre-Orders</span></div>
+      <div class="table-wrap">
+        <div class="table-head">
+          <span class="table-head-title">Founding Member Reservations</span>
+          <button class="t-export" onclick="exportCSV('tt_preorders','preorders')">Export CSV</button>
+        </div>
+        <table>
+          <thead><tr>
+            <th>#</th><th>Name</th><th>Email</th><th>Country</th><th>Collection</th><th>Reserved</th>
+          </tr></thead>
+          <tbody id="po-table"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- COMMUNITY -->
+    <div class="panel" id="panel-community">
+      <div class="section-head"><div class="section-line"></div><span class="section-title">Community Signups</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="table-wrap">
+          <div class="table-head"><span class="table-head-title">VIP Waitlist</span><button class="t-export" onclick="exportCSV('tt_vip','vip')">CSV</button></div>
+          <table><thead><tr><th>#</th><th>Email</th><th>Joined</th></tr></thead>
+          <tbody id="vip-table"></tbody></table>
+        </div>
+        <div class="table-wrap">
+          <div class="table-head"><span class="table-head-title">Reserve Letter</span><button class="t-export" onclick="exportCSV('tt_nl','newsletter')">CSV</button></div>
+          <table><thead><tr><th>#</th><th>Email</th><th>Joined</th></tr></thead>
+          <tbody id="nl-table"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SITE STATUS -->
+    <div class="panel" id="panel-status">
+      <div class="section-head"><div class="section-line"></div><span class="section-title">Website Status</span></div>
+      <div class="status-grid">
+        <div class="status-card">
+          <div style="font-size:11px;color:#B08A3C;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:14px">Domain & Hosting</div>
+          <div class="status-row"><span class="status-key">Domain</span><span class="status-val">teatapler.com</span></div>
+          <div class="status-row"><span class="status-key">Registrar</span><span class="status-val">GoDaddy</span></div>
+          <div class="status-row"><span class="status-key">Host</span><span class="status-val">Netlify (Free)</span></div>
+          <div class="status-row"><span class="status-key">SSL / HTTPS</span><span class="status-val"><span class="dot-amber"></span>Pending DNS</span></div>
+          <div class="status-row"><span class="status-key">DNS Propagation</span><span class="status-val"><span class="dot-amber"></span>Not Started</span></div>
+        </div>
+        <div class="status-card">
+          <div style="font-size:11px;color:#B08A3C;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:14px">Site Health</div>
+          <div class="status-row"><span class="status-key">HTML File</span><span class="status-val"><span class="dot-green"></span>Ready</span></div>
+          <div class="status-row"><span class="status-key">Admin Panel</span><span class="status-val"><span class="dot-green"></span>Active</span></div>
+          <div class="status-row"><span class="status-key">Forms</span><span class="status-val"><span class="dot-green"></span>Collecting</span></div>
+          <div class="status-row"><span class="status-key">Countdown</span><span class="status-val"><span class="dot-green"></span>Running (Sep 1, 2026)</span></div>
+          <div class="status-row"><span class="status-key">Artello Chat</span><span class="status-val"><span class="dot-green"></span>Active</span></div>
+        </div>
+        <div class="status-card">
+          <div style="font-size:11px;color:#B08A3C;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:14px">Links Audit</div>
+          <div class="status-row"><span class="status-key">Nav Links</span><span class="status-val"><span class="dot-green"></span>All Connected</span></div>
+          <div class="status-row"><span class="status-key">Email Link</span><span class="status-val"><span class="dot-green"></span>hello@teatapler.com</span></div>
+          <div class="status-row"><span class="status-key">Social Links</span><span class="status-val"><span class="dot-amber"></span>Placeholder URLs</span></div>
+          <div class="status-row"><span class="status-key">Pre-Order Form</span><span class="status-val"><span class="dot-green"></span>Validated</span></div>
+          <div class="status-row"><span class="status-key">VIP / Newsletter</span><span class="status-val"><span class="dot-green"></span>Connected</span></div>
+        </div>
+        <div class="status-card">
+          <div style="font-size:11px;color:#B08A3C;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:14px">Next Actions</div>
+          <div class="status-row"><span class="status-key">1. Deploy to Netlify</span><span class="status-val"><span class="dot-amber"></span>Pending</span></div>
+          <div class="status-row"><span class="status-key">2. Add domain in Netlify</span><span class="status-val"><span class="dot-grey"></span>Waiting</span></div>
+          <div class="status-row"><span class="status-key">3. Update GoDaddy DNS</span><span class="status-val"><span class="dot-grey"></span>Waiting</span></div>
+          <div class="status-row"><span class="status-key">4. Update social URLs</span><span class="status-val"><span class="dot-amber"></span>Manual</span></div>
+          <div class="status-row"><span class="status-key">5. Connect real email</span><span class="status-val"><span class="dot-amber"></span>Optional</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DEPLOY GUIDE -->
+    <div class="panel" id="panel-deploy">
+      <div class="section-head"><div class="section-line"></div><span class="section-title">Deploy to teatapler.com</span></div>
+      <div style="display:flex;flex-direction:column;gap:16px;max-width:700px">
+        
+        <div class="status-card">
+          <div style="color:#B08A3C;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:14px">Step 1 — Upload to Netlify (2 min)</div>
+          <div style="font-size:12px;color:rgba(242,239,231,.6);line-height:1.9;margin-bottom:12px">
+            1. Go to <strong style="color:#F2EFE7">netlify.com</strong> → Create a free account<br/>
+            2. From the dashboard, drag both files into the drop zone:<br/>
+            &nbsp;&nbsp;&nbsp;• <code style="color:#B08A3C">TeaTapler_Website.html</code> → rename to <code style="color:#B08A3C">index.html</code> first<br/>
+            &nbsp;&nbsp;&nbsp;• <code style="color:#B08A3C">teatapler-admin.html</code> (this file)<br/>
+            3. Your site goes live immediately on a random URL
+          </div>
+          <div style="background:rgba(176,138,60,.07);border:1px solid rgba(176,138,60,.15);padding:12px 16px;font-size:11px;color:#B08A3C">
+            ⚠️ Important: rename <strong>TeaTapler_Website.html</strong> → <strong>index.html</strong> before uploading so it loads at the root URL
+          </div>
+        </div>
+
+        <div class="status-card">
+          <div style="color:#B08A3C;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:14px">Step 2 — Connect Your Domain (5 min)</div>
+          <div style="font-size:12px;color:rgba(242,239,231,.6);line-height:1.9">
+            In Netlify:<br/>
+            1. Go to <strong style="color:#F2EFE7">Site Settings → Domain Management → Add custom domain</strong><br/>
+            2. Type <code style="color:#B08A3C">teatapler.com</code> → Verify<br/>
+            3. Click <strong style="color:#F2EFE7">"Set up Netlify DNS"</strong><br/>
+            4. Copy the 4 nameserver addresses Netlify gives you (like dns1.p0X.nsone.net)
+          </div>
+        </div>
+
+        <div class="status-card">
+          <div style="color:#B08A3C;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:14px">Step 3 — Update GoDaddy (3 min)</div>
+          <div style="font-size:12px;color:rgba(242,239,231,.6);line-height:1.9">
+            1. Login to <strong style="color:#F2EFE7">godaddy.com</strong> → My Products → find teatapler.com<br/>
+            2. Click <strong style="color:#F2EFE7">DNS</strong> button → scroll to <strong style="color:#F2EFE7">Nameservers</strong> section<br/>
+            3. Click <strong style="color:#F2EFE7">Change</strong> → "I'll use my own nameservers"<br/>
+            4. Delete GoDaddy's nameservers<br/>
+            5. Paste Netlify's 4 nameservers → <strong style="color:#F2EFE7">Save</strong><br/><br/>
+            <span style="color:#4ADE80">✓ Done — wait 15–60 mins for propagation.</span><br/>
+            Netlify will auto-enable free HTTPS/SSL.
+          </div>
+        </div>
+
+        <div class="status-card">
+          <div style="color:#B08A3C;font-size:10px;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:14px">Your Admin URL (after deploy)</div>
+          <div style="font-size:13px;color:#F2EFE7;font-family:'Playfair Display',serif;margin-bottom:8px">https://www.teatapler.com/teatapler-admin.html</div>
+          <div style="font-size:11px;color:rgba(242,239,231,.4)">Bookmark this. Default login: admin / teatapler2026</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="panel" id="panel-settings">
+      <div class="section-head"><div class="section-line"></div><span class="section-title">Site Settings</span></div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-label">Admin Password</div>
+          <div class="setting-desc">Change your TeaTapler OS login password</div>
+        </div>
+        <div><input class="setting-input" type="password" id="s-newpass" placeholder="New password"/></div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-label">Launch Date</div>
+          <div class="setting-desc">The countdown target date on your website</div>
+        </div>
+        <div><input class="setting-input" type="date" id="s-launchdate" value="2026-09-01"/></div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-label">Reserved Counter Seed</div>
+          <div class="setting-desc">Starting number shown as founding members reserved</div>
+        </div>
+        <div><input class="setting-input" type="number" id="s-seed" value="247"/></div>
+      </div>
+      <div class="setting-row">
+        <div class="setting-info">
+          <div class="setting-label">Contact Email</div>
+          <div class="setting-desc">Public email shown in footer</div>
+        </div>
+        <div><input class="setting-input" type="email" id="s-email" value="hello@teatapler.com"/></div>
+      </div>
+      <button class="save-btn" onclick="saveSettings()">Save Settings ✦</button>
+    </div>
+
+    <!-- EXPORT -->
+    <div class="panel" id="panel-export">
+      <div class="section-head"><div class="section-line"></div><span class="section-title">Export Data</span></div>
+      <div style="display:flex;flex-direction:column;gap:12px;max-width:500px">
+        <div class="status-card" style="display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-size:12px;color:#F2EFE7;font-weight:600;margin-bottom:4px">Pre-Orders</div><div style="font-size:10px;color:rgba(242,239,231,.35)" id="exp-po-count">0 records</div></div>
+          <button class="t-export" onclick="exportCSV('tt_preorders','teatapler-preorders')">Download CSV</button>
+        </div>
+        <div class="status-card" style="display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-size:12px;color:#F2EFE7;font-weight:600;margin-bottom:4px">VIP Waitlist</div><div style="font-size:10px;color:rgba(242,239,231,.35)" id="exp-vip-count">0 records</div></div>
+          <button class="t-export" onclick="exportCSV('tt_vip','teatapler-vip')">Download CSV</button>
+        </div>
+        <div class="status-card" style="display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-size:12px;color:#F2EFE7;font-weight:600;margin-bottom:4px">Reserve Letter</div><div style="font-size:10px;color:rgba(242,239,231,.35)" id="exp-nl-count">0 records</div></div>
+          <button class="t-export" onclick="exportCSV('tt_nl','teatapler-newsletter')">Download CSV</button>
+        </div>
+        <div class="status-card" style="display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-size:12px;color:#F2EFE7;font-weight:600;margin-bottom:4px">All Data Combined</div><div style="font-size:10px;color:rgba(242,239,231,.35)">All lists in one file</div></div>
+          <button class="t-export" onclick="exportAll()">Download All</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<div id="toast"></div>
+
+<script>
+// ── AUTH ────────────────────────────────────────────────────────
+const DEFAULT_PASS = 'teatapler2026';
+function doLogin(){
+  const u = document.getElementById('lg-user').value;
+  const p = document.getElementById('lg-pass').value;
+  const saved = localStorage.getItem('tt_admin_pass') || DEFAULT_PASS;
+  if(u === 'admin' && p === saved){
+    document.getElementById('login-screen').style.display = 'none';
+    loadAll();
+  } else {
+    const e = document.getElementById('lg-err');
+    e.style.display = 'block';
+    setTimeout(()=>e.style.display='none', 3000);
+  }
+}
+document.getElementById('lg-pass').addEventListener('keydown', e=>{if(e.key==='Enter')doLogin();});
+
+// ── PANEL SWITCHING ─────────────────────────────────────────────
+function showPanel(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-link').forEach(l=>l.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if(id==='dashboard'||id==='preorders'||id==='community'||id==='export') loadAll();
+}
+
+// ── DATA LOADING ────────────────────────────────────────────────
+function loadAll(){
+  const po = JSON.parse(localStorage.getItem('tt_preorders')||'[]');
+  const vip = JSON.parse(localStorage.getItem('tt_vip')||'[]');
+  const nl = JSON.parse(localStorage.getItem('tt_nl')||'[]');
+
+  // Stats
+  document.getElementById('s-preorders').textContent = po.length;
+  document.getElementById('s-vip').textContent = vip.length;
+  document.getElementById('s-nl').textContent = nl.length;
+  document.getElementById('s-corp').textContent = parseInt(localStorage.getItem('tt_corp_count')||'0');
+
+  // Export counts
+  if(document.getElementById('exp-po-count')) document.getElementById('exp-po-count').textContent = po.length + ' records';
+  if(document.getElementById('exp-vip-count')) document.getElementById('exp-vip-count').textContent = vip.length + ' records';
+  if(document.getElementById('exp-nl-count')) document.getElementById('exp-nl-count').textContent = nl.length + ' records';
+
+  // Dashboard table (latest 10)
+  const dashTb = document.getElementById('dash-table');
+  if(po.length === 0){
+    dashTb.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="big">🍃</div>No pre-orders yet. Share your website to start collecting.</td></tr>';
+  } else {
+    dashTb.innerHTML = po.slice(-10).reverse().map((r,i)=>`
+      <tr>
+        <td>${r.name||'—'}</td>
+        <td><a href="mailto:${r.email}" style="color:#B08A3C;text-decoration:none">${r.email}</a></td>
+        <td>${r.country||'—'}</td>
+        <td style="font-size:10px">${r.interest||'—'}</td>
+        <td style="font-size:10px;color:rgba(242,239,231,.4)">${formatDate(r.ts)}</td>
+        <td><span class="td-badge bd-new">Pre-Order</span></td>
+      </tr>`).join('');
+  }
+
+  // Pre-orders table
+  const poTb = document.getElementById('po-table');
+  if(po.length === 0){
+    poTb.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="big">🍃</div>No pre-orders yet.</td></tr>';
+  } else {
+    poTb.innerHTML = po.map((r,i)=>`
+      <tr>
+        <td style="color:rgba(242,239,231,.3)">${i+1}</td>
+        <td>${r.name||'—'}</td>
+        <td><a href="mailto:${r.email}" style="color:#B08A3C;text-decoration:none">${r.email}</a></td>
+        <td>${r.country||'—'}</td>
+        <td style="font-size:10px">${r.interest||'—'}</td>
+        <td style="font-size:10px;color:rgba(242,239,231,.4)">${formatDate(r.ts)}</td>
+      </tr>`).join('');
+  }
+
+  // VIP table
+  const vipTb = document.getElementById('vip-table');
+  vipTb.innerHTML = vip.length === 0
+    ? '<tr><td colspan="3" class="empty-state">No VIP signups yet.</td></tr>'
+    : vip.map((r,i)=>`<tr><td style="color:rgba(242,239,231,.3)">${i+1}</td><td><a href="mailto:${r.email}" style="color:#B08A3C;text-decoration:none">${r.email}</a></td><td style="font-size:10px;color:rgba(242,239,231,.4)">${formatDate(r.ts)}</td></tr>`).join('');
+
+  // NL table
+  const nlTb = document.getElementById('nl-table');
+  nlTb.innerHTML = nl.length === 0
+    ? '<tr><td colspan="3" class="empty-state">No newsletter signups yet.</td></tr>'
+    : nl.map((r,i)=>`<tr><td style="color:rgba(242,239,231,.3)">${i+1}</td><td><a href="mailto:${r.email}" style="color:#B08A3C;text-decoration:none">${r.email}</a></td><td style="font-size:10px;color:rgba(242,239,231,.4)">${formatDate(r.ts)}</td></tr>`).join('');
+}
+
+function formatDate(ts){
+  if(!ts) return '—';
+  const d = new Date(ts);
+  return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) + ' ' + d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+}
+
+// ── CSV EXPORT ──────────────────────────────────────────────────
+function exportCSV(key, filename){
+  const data = JSON.parse(localStorage.getItem(key)||'[]');
+  if(data.length === 0){ showToast('No data to export yet.'); return; }
+  const headers = Object.keys(data[0]).join(',');
+  const rows = data.map(r=>Object.values(r).map(v=>'"'+String(v||'').replace(/"/g,'""')+'"').join(','));
+  const csv = [headers, ...rows].join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename + '-' + new Date().toISOString().split('T')[0] + '.csv';
+  a.click();
+  showToast('CSV exported successfully ✦');
+}
+
+function exportAll(){
+  const po = JSON.parse(localStorage.getItem('tt_preorders')||'[]').map(r=>{r.type='preorder';return r;});
+  const vip = JSON.parse(localStorage.getItem('tt_vip')||'[]').map(r=>{r.type='vip';return r;});
+  const nl = JSON.parse(localStorage.getItem('tt_nl')||'[]').map(r=>{r.type='newsletter';return r;});
+  const all = [...po,...vip,...nl];
+  if(all.length===0){showToast('No data to export yet.');return;}
+  const headers = ['type','name','email','country','interest','ts'].join(',');
+  const rows = all.map(r=>['type','name','email','country','interest','ts'].map(k=>'"'+(r[k]||'')+ '"').join(','));
+  const csv = [headers,...rows].join('\n');
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'teatapler-all-data-'+new Date().toISOString().split('T')[0]+'.csv';
+  a.click();
+  showToast('All data exported ✦');
+}
+
+// ── SETTINGS ────────────────────────────────────────────────────
+function saveSettings(){
+  const np = document.getElementById('s-newpass').value;
+  if(np) localStorage.setItem('tt_admin_pass', np);
+  showToast('Settings saved ✦');
+}
+
+// ── TOAST ────────────────────────────────────────────────────────
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.display = 'block';
+  setTimeout(()=>t.style.display='none', 3000);
+}
+</script>
+</body>
+</html>

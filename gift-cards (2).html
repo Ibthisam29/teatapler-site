@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gift Cards — TeaTapler</title>
+<meta name="description" content="The gift of indulgence. TeaTapler gift cards delivered digitally or in a bespoke package.">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --emerald-deep: #0A3D3A; --emerald: #0F6A63; --cream: #F2EFE7; --gold: #B08A3C; --muted: #B9C8C4;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Montserrat', sans-serif; background: var(--cream); color: var(--emerald-deep); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3 { font-family: 'Playfair Display', serif; font-weight: 500; }
+  nav { background: var(--emerald-deep); padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+  nav a { color: var(--cream); text-decoration: none; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin-left: 32px; opacity: .85; }
+  nav a:hover { opacity: 1; color: var(--gold); }
+  .brand { color: var(--gold); font-family: 'Playfair Display', serif; font-size: 20px; letter-spacing: 4px; }
+
+  .hero { padding: 100px 40px 60px; text-align: center; background: linear-gradient(180deg, var(--cream) 0%, #e9e6dd 100%); }
+  .hero .tag { font-size: 11px; letter-spacing: 6px; color: var(--gold); margin-bottom: 20px; text-transform: uppercase; }
+  .hero h1 { font-size: clamp(42px, 6vw, 72px); line-height: 1.1; margin-bottom: 24px; }
+  .hero p { font-size: 18px; color: #5a6b67; max-width: 600px; margin: 0 auto; font-weight: 300; }
+
+  .card-section { max-width: 900px; margin: 60px auto; padding: 0 40px; }
+
+  .amounts { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin: 40px 0; }
+  .amount-btn {
+    background: white; border: 1px solid rgba(10,61,58,.15);
+    padding: 36px 20px; text-align: center; cursor: pointer; transition: all .3s;
+    font-family: 'Playfair Display', serif;
+  }
+  .amount-btn.selected { background: var(--emerald-deep); color: var(--cream); border-color: var(--gold); }
+  .amount-btn:hover { border-color: var(--gold); transform: translateY(-3px); }
+  .amount-btn .amt { font-size: 32px; font-weight: 500; }
+  .amount-btn .lbl { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; opacity: .7; margin-top: 4px; }
+
+  form { background: white; padding: 50px 40px; }
+  .fg { margin-bottom: 24px; }
+  .fg label { display: block; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; font-weight: 600; }
+  .fg input, .fg textarea {
+    width: 100%; padding: 14px; border: 1px solid rgba(10,61,58,.15); background: var(--cream);
+    font-family: 'Montserrat'; font-size: 14px; color: var(--emerald-deep);
+  }
+  .fg input:focus, .fg textarea:focus { outline: none; border-color: var(--gold); }
+  textarea { resize: vertical; min-height: 100px; font-family: 'Playfair Display', serif; font-style: italic; }
+  .cta { background: var(--emerald-deep); color: var(--cream); border: none; padding: 20px; width: 100%; letter-spacing: 3px; text-transform: uppercase; font-size: 11px; font-weight: 600; cursor: pointer; transition: background .3s; margin-top: 20px; }
+  .cta:hover { background: var(--gold); color: var(--emerald-deep); }
+  .cta:disabled { opacity: .5; cursor: not-allowed; }
+
+  footer { background: var(--emerald-deep); color: var(--muted); text-align: center; padding: 40px; font-size: 12px; letter-spacing: 2px; margin-top: 80px; }
+
+  .success { background: #e8f4ea; border: 1px solid #4a7c57; padding: 20px; margin-bottom: 20px; display: none; }
+  .error { background: #fdeaea; border: 1px solid #c75c5c; padding: 20px; margin-bottom: 20px; display: none; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="brand">TEATAPLER</div>
+  <div>
+    <a href="/">Home</a>
+    <a href="/shop.html">Shop</a>
+    <a href="/subscribe.html">Subscribe</a>
+    <a href="/gift-cards.html">Gift Cards</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="tag">Give The Gift Of Ceremony</div>
+  <h1>TeaTapler Gift Cards</h1>
+  <p>Delivered digitally with a handwritten note, or paired with a bespoke tin for a presentation worthy of the occasion.</p>
+</section>
+
+<section class="card-section">
+  <h2 style="font-size: 24px; margin-bottom: 10px;">Choose An Amount</h2>
+  <div class="amounts" id="amounts"><div style="padding:40px;color:#999">Loading…</div></div>
+
+  <form id="giftForm" onsubmit="submitGift(event)">
+    <div class="success" id="success-msg"></div>
+    <div class="error" id="error-msg"></div>
+
+    <div class="fg">
+      <label>Your Email (receipt)</label>
+      <input type="email" name="buyer_email" required placeholder="you@email.com">
+    </div>
+    <div class="fg">
+      <label>Recipient Name</label>
+      <input type="text" name="recipient_name" placeholder="Who is this for?">
+    </div>
+    <div class="fg">
+      <label>Recipient Email (digital delivery)</label>
+      <input type="email" name="recipient_email" placeholder="recipient@email.com — leave blank to send to yourself">
+    </div>
+    <div class="fg">
+      <label>Personal Message</label>
+      <textarea name="message" placeholder="A note that will travel with the gift card…"></textarea>
+    </div>
+
+    <button type="submit" class="cta" id="cta-btn" disabled>Select An Amount To Continue</button>
+  </form>
+</section>
+
+<footer>© 2026 TEATAPLER · INDULGE IN THE ELEGANCE OF TEA</footer>
+
+<script>
+  const SUPABASE_URL = 'https://uzzgjdcjkpdccnlpviab.supabase.co';
+  const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY_HERE'; // ← paste your anon key
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  let denominations = [];
+  let selected = null;
+
+  async function loadDenominations() {
+    const { data, error } = await sb
+      .from('gift_card_denominations')
+      .select('*')
+      .eq('is_active', true)
+      .order('sort_order');
+    if (error) { console.error(error); return; }
+    denominations = data || [];
+    const html = denominations.map(d => `
+      <div class="amount-btn" data-id="${d.id}" onclick="selectAmount('${d.id}')">
+        <div class="amt">$${Math.round(d.amount)}</div>
+        <div class="lbl">USD</div>
+      </div>
+    `).join('');
+    document.getElementById('amounts').innerHTML = html;
+  }
+
+  function selectAmount(id) {
+    selected = denominations.find(d => d.id === id);
+    document.querySelectorAll('.amount-btn').forEach(el => {
+      el.classList.toggle('selected', el.dataset.id === id);
+    });
+    const btn = document.getElementById('cta-btn');
+    btn.disabled = false;
+    btn.textContent = `Purchase $${Math.round(selected.amount)} Gift Card ✦`;
+  }
+
+  async function submitGift(e) {
+    e.preventDefault();
+    if (!selected) return;
+    const form = e.target;
+    const buyer = form.buyer_email.value;
+    const rName = form.recipient_name.value;
+    const rEmail = form.recipient_email.value;
+    const msg = form.message.value;
+
+    const errEl = document.getElementById('error-msg');
+    const okEl  = document.getElementById('success-msg');
+    errEl.style.display = 'none'; okEl.style.display = 'none';
+
+    // Record the pending gift card in Supabase
+    const code = 'TT-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    const { data: card, error } = await sb.from('gift_cards').insert({
+      code,
+      denomination: selected.amount,
+      balance: selected.amount,
+      purchased_by_email: buyer,
+      recipient_email: rEmail || buyer,
+      recipient_name: rName,
+      message: msg,
+      status: 'pending'
+    }).select().single();
+
+    if (error) {
+      errEl.textContent = 'Could not save gift card: ' + error.message;
+      errEl.style.display = 'block';
+      return;
+    }
+
+    // Redirect to Stripe payment link if one is attached
+    if (selected.stripe_link) {
+      window.location.href = selected.stripe_link;
+    } else {
+      okEl.innerHTML = `Gift card <strong>${code}</strong> created. Payment link not configured yet — please contact hello@teatapler.com to complete your purchase.`;
+      okEl.style.display = 'block';
+    }
+  }
+
+  loadDenominations();
+</script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TeaTapler Diagnostic</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body{font-family:system-ui;background:#0A3D3A;color:#F2EFE7;padding:30px;max-width:720px;margin:0 auto;line-height:1.6}
+  h1{color:#B08A3C;font-size:22px}
+  input,button,textarea{width:100%;padding:12px;margin:8px 0;font-size:14px;border:1px solid #B08A3C;background:rgba(0,0,0,.2);color:#F2EFE7;border-radius:4px;font-family:monospace}
+  button{background:#B08A3C;color:#0A3D3A;cursor:pointer;font-weight:700;font-family:system-ui}
+  button:hover{background:#d4a858}
+  .result{padding:14px;margin:8px 0;border-radius:4px;font-family:monospace;font-size:12px;white-space:pre-wrap;word-break:break-all}
+  .ok{background:rgba(141,212,163,.15);border:1px solid #8dd4a3;color:#8dd4a3}
+  .err{background:rgba(199,92,92,.15);border:1px solid #c75c5c;color:#f5b0b0}
+  .info{background:rgba(176,138,60,.1);border:1px solid #B08A3C;color:#d4a858}
+  .step{background:rgba(255,255,255,.03);padding:16px;margin:16px 0;border-left:3px solid #B08A3C}
+  code{background:rgba(255,255,255,.1);padding:2px 6px;border-radius:3px;font-size:12px}
+</style>
+</head>
+<body>
+<h1>TeaTapler Site Diagnostic</h1>
+<p>Open this on your phone or laptop. It will test your Supabase connection, verify schemas, and tell you exactly what is wrong.</p>
+
+<div class="step">
+  <strong>Step 1 — paste your Supabase <code>anon public</code> key</strong><br>
+  <small>Get it from: Supabase Dashboard → Settings → API → "anon public" (NOT "service_role")</small>
+  <input id="key" placeholder="eyJhbGci... (your anon public key)" autocomplete="off">
+  <button onclick="runAll()">🔍 Run All Checks</button>
+</div>
+
+<div id="results"></div>
+
+<script>
+const URL = 'https://uzzgjdcjkpdccnlpviab.supabase.co';
+const R = document.getElementById('results');
+function log(cls, msg){ R.innerHTML += `<div class="result ${cls}">${msg}</div>`; }
+function clearLog(){ R.innerHTML = ''; }
+
+async function runAll(){
+  clearLog();
+  const key = document.getElementById('key').value.trim();
+  if (!key){ log('err','❌ Paste your anon key first.'); return; }
+  if (key === 'YOUR_ANON_KEY_HERE'){ log('err','❌ That is the placeholder. Paste your REAL key from Supabase dashboard.'); return; }
+  if (!key.startsWith('eyJ') && !key.startsWith('sb_publishable_')){ log('err','❌ Key should start with "eyJ" (legacy) or "sb_publishable_" (new). You may have copied the wrong field.'); return; }
+  if (key.length < 40){ log('err','❌ Key seems too short — likely truncated. Re-copy from Supabase.'); return; }
+  log('info','ℹ️ Key format looks OK. Testing connection…');
+
+  // Test 1: Raw REST API
+  try {
+    const r = await fetch(URL+'/rest/v1/site_settings?select=key&limit=1', { headers: { apikey: key, Authorization: 'Bearer '+key }});
+    if (r.status === 401){ log('err','❌ Invalid API key — Supabase rejected it. Go back to Supabase → Settings → API → re-copy "anon public".'); return; }
+    if (r.status === 404){ log('err','❌ Project URL may be wrong. Expected: '+URL); return; }
+    if (r.ok){ log('ok','✅ Test 1 PASSED: Supabase connection works.'); }
+    else { log('err','⚠️ Test 1 unexpected status '+r.status+': '+await r.text()); return; }
+  } catch(e){ log('err','❌ Test 1 FAILED: '+e.message); return; }
+
+  // Test 2: Required tables exist
+  const tables = ['products','events','journal_posts','subscription_plans','gift_card_denominations','rag_knowledge','seo_meta','admin_profiles','site_protection'];
+  const missing = [];
+  for (const t of tables){
+    try {
+      const r = await fetch(URL+'/rest/v1/'+t+'?select=*&limit=1', { headers: { apikey: key, Authorization: 'Bearer '+key }});
+      if (r.status === 404 || r.status === 400){ missing.push(t); }
+    } catch(e){ missing.push(t); }
+  }
+  if (missing.length === 0) log('ok','✅ Test 2 PASSED: All 9 required tables exist.');
+  else { log('err','⚠️ Test 2 PARTIAL: Missing tables → '+missing.join(', ')+'\n\nFix: Run these SQL files in Supabase SQL Editor:\n- schema.sql\n- monetization_schema.sql\n- 01_hardening_schema.sql'); }
+
+  // Test 3: Seed data
+  try {
+    const r1 = await fetch(URL+'/rest/v1/gift_card_denominations?select=amount&is_active=eq.true', { headers: { apikey: key, Authorization: 'Bearer '+key }});
+    const d1 = await r1.json();
+    if (Array.isArray(d1) && d1.length > 0) log('ok','✅ Test 3a: Gift card amounts ('+d1.length+'): '+d1.map(x=>'$'+x.amount).join(', '));
+    else log('err','⚠️ Test 3a: No gift card denominations seeded. Run monetization_schema.sql.');
+
+    const r2 = await fetch(URL+'/rest/v1/subscription_plans?select=name,price_monthly&status=eq.published', { headers: { apikey: key, Authorization: 'Bearer '+key }});
+    const d2 = await r2.json();
+    if (Array.isArray(d2) && d2.length > 0) log('ok','✅ Test 3b: Subscription plans ('+d2.length+'): '+d2.map(x=>x.name+' $'+x.price_monthly).join(', '));
+    else log('err','⚠️ Test 3b: No published subscription plans. Run monetization_schema.sql.');
+
+    const r3 = await fetch(URL+'/rest/v1/rag_knowledge?select=category&is_active=eq.true', { headers: { apikey: key, Authorization: 'Bearer '+key }});
+    const d3 = await r3.json();
+    if (Array.isArray(d3) && d3.length > 0) log('ok','✅ Test 3c: RAG knowledge entries: '+d3.length);
+    else log('err','⚠️ Test 3c: RAG empty. Run 01_hardening_schema.sql.');
+  } catch(e){ log('err','⚠️ Test 3 error: '+e.message); }
+
+  // Test 4: Auth check
+  try {
+    const sb = supabase.createClient(URL, key);
+    const { data, error } = await sb.auth.getSession();
+    if (error) log('err','⚠️ Test 4 auth error: '+error.message);
+    else log('ok','✅ Test 4 PASSED: Auth client initialized.');
+  } catch(e){ log('err','⚠️ Test 4 failed: '+e.message); }
+
+  log('info','────────────────────\n📋 SUMMARY — copy this key to all HTML files:\n'+key.slice(0,20)+'...'+key.slice(-20)+'\n(length: '+key.length+' chars)');
+  log('info','Files that need this key:\n• teatapler-admin.html (SUPABASE_ANON_KEY = ...)\n• index.html (<meta name="sb-anon" ...>)\n• shop.html\n• events.html\n• subscribe.html\n• gift-cards.html');
+}
+</script>
+</body>
+</html>

@@ -147,6 +147,13 @@ textarea.fi{resize:vertical;min-height:72px}
       <div class="nav-item" data-panel="preorders" onclick="showPanel('preorders')"><span class="ni">📦</span>Pre-Orders</div>
       <div class="nav-item" data-panel="rsvps" onclick="showPanel('rsvps')"><span class="ni">🎟</span>Event RSVPs</div>
       <div class="nav-item" data-panel="subscribers" onclick="showPanel('subscribers')"><span class="ni">✉️</span>Subscribers</div>
+      <div class="nav-sec-label">Growth</div>
+      <div class="nav-item" data-panel="seo" onclick="showPanel('seo')"><span class="ni">🔍</span>SEO &amp; GEO</div>
+      <div class="nav-item" data-panel="rag" onclick="showPanel('rag')"><span class="ni">🧠</span>Artello Knowledge</div>
+      <div class="nav-sec-label">Security</div>
+      <div class="nav-item" data-panel="users" onclick="showPanel('users')"><span class="ni">👥</span>Admin Users</div>
+      <div class="nav-item" data-panel="logs" onclick="showPanel('logs')"><span class="ni">📊</span>API Logs</div>
+      <div class="nav-item" data-panel="protection" onclick="showPanel('protection')"><span class="ni">🛡</span>Site Protection</div>
       <div class="nav-sec-label">Settings</div>
       <div class="nav-item" data-panel="settings" onclick="showPanel('settings')"><span class="ni">⚙️</span>Site Settings</div>
     </aside>
@@ -203,6 +210,72 @@ textarea.fi{resize:vertical;min-height:72px}
   <div class="ph"><div><div class="pt">Subscribers</div></div>
     <button class="btn btn-s" onclick="exportCSV('subscribers','email,list,created_at')">↓ Export CSV</button></div>
   <div class="card" id="sub-wrap"><div style="color:rgba(255,255,255,.25);font-size:12px;padding:20px">Loading...</div></div>
+</div>
+
+<!-- ============ SEO & GEO ============ -->
+<div class="panel" id="panel-seo">
+  <div class="ph"><div><div class="pt">SEO &amp; GEO</div><div class="ps">Per-page meta · sitemap.xml · robots.txt · llms.txt for AI search</div></div>
+    <div style="display:flex;gap:8px"><button class="btn btn-s" onclick="window.open('/sitemap.xml','_blank')">View Sitemap</button><button class="btn btn-s" onclick="window.open('/llms.txt','_blank')">View llms.txt</button><button class="btn btn-s btn-primary" onclick="addSeoPage()">+ Add Page</button></div></div>
+  <div class="card" style="background:rgba(176,138,60,.06);border:1px solid rgba(176,138,60,.15);padding:14px;margin-bottom:14px;font-size:11px;color:rgba(255,255,255,.55);line-height:1.6">
+    <strong style="color:#B08A3C">GEO (Generative Engine Optimization)</strong> — the AI Summary field is pulled by ChatGPT, Claude, Perplexity, and Google AI Overviews via <code>/llms.txt</code>. Keep it factual and under 300 chars per page.
+  </div>
+  <div id="seo-wrap"><div style="padding:20px;color:rgba(255,255,255,.3);font-size:12px">Loading…</div></div>
+</div>
+
+<!-- ============ RAG / ARTELLO KNOWLEDGE ============ -->
+<div class="panel" id="panel-rag">
+  <div class="ph"><div><div class="pt">Artello Knowledge Base</div><div class="ps">Facts the concierge chatbot uses. Add Q&amp;A pairs — Artello cites them verbatim instead of hallucinating.</div></div>
+    <button class="btn btn-s btn-primary" onclick="addRagEntry()">+ Add Knowledge</button></div>
+  <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+    <select id="rag-filter" onchange="loadRag()" class="fi" style="max-width:220px">
+      <option value="">All categories</option>
+      <option>brand</option><option>products</option><option>brewing</option><option>pairing</option>
+      <option>events</option><option>shipping</option><option>gifting</option><option>faq</option><option>policy</option>
+    </select>
+    <input id="rag-search" class="fi" placeholder="Search knowledge…" oninput="loadRag()" style="max-width:300px"/>
+  </div>
+  <div id="rag-wrap"><div style="padding:20px;color:rgba(255,255,255,.3);font-size:12px">Loading…</div></div>
+</div>
+
+<!-- ============ ADMIN USERS ============ -->
+<div class="panel" id="panel-users">
+  <div class="ph"><div><div class="pt">Admin Users</div><div class="ps">Owners have full access · Editors manage content · Viewers read-only</div></div>
+    <button class="btn btn-s btn-primary" onclick="addAdminUser()">+ Invite Admin</button></div>
+  <div class="card" style="background:rgba(176,138,60,.06);border:1px solid rgba(176,138,60,.15);padding:14px;margin-bottom:14px;font-size:11px;color:rgba(255,255,255,.55);line-height:1.6">
+    New users are created in <strong style="color:#B08A3C">Supabase Dashboard → Authentication → Users → Add user</strong>. Then come back here to assign a role. The first signed-in user is automatically Owner.
+  </div>
+  <div id="users-wrap"><div style="padding:20px;color:rgba(255,255,255,.3);font-size:12px">Loading…</div></div>
+</div>
+
+<!-- ============ API LOGS ============ -->
+<div class="panel" id="panel-logs">
+  <div class="ph"><div><div class="pt">API Logs</div><div class="ps">Edge Function calls · rate limits · errors</div></div>
+    <div style="display:flex;gap:8px"><select id="log-filter" onchange="loadLogs()" class="fi" style="max-width:180px"><option value="">All</option><option value="create_stripe_link">Stripe Links</option><option value="webhook">Webhooks</option></select><button class="btn btn-s" onclick="loadLogs()">↻ Refresh</button></div></div>
+  <div id="logs-wrap"><div style="padding:20px;color:rgba(255,255,255,.3);font-size:12px">Loading…</div></div>
+</div>
+
+<!-- ============ SITE PROTECTION ============ -->
+<div class="panel" id="panel-protection">
+  <div class="ph"><div><div class="pt">Site Protection</div><div class="ps">Maintenance mode · origin allowlist · rate limits · blocked IPs</div></div>
+    <button class="btn btn-s btn-primary" onclick="saveProtection()">Save All</button></div>
+  <div class="card" style="padding:24px">
+    <div class="fg"><label class="fl"><input type="checkbox" id="prot-maint" style="margin-right:8px"/>Maintenance Mode</label>
+      <input id="prot-maint-msg" class="fi" placeholder="We&apos;ll be right back…" style="margin-top:8px"/></div>
+    <div class="fg"><label class="fl">Allowed Origins (one per line — for Stripe endpoint CORS)</label>
+      <textarea id="prot-origins" class="fi" rows="4" style="font-family:monospace;font-size:11px"></textarea></div>
+    <div class="fg"><label class="fl">Blocked Email Addresses (one per line)</label>
+      <textarea id="prot-emails" class="fi" rows="3" style="font-family:monospace;font-size:11px"></textarea></div>
+    <div class="fg"><label class="fl">Blocked IP Addresses (one per line)</label>
+      <textarea id="prot-ips" class="fi" rows="3" style="font-family:monospace;font-size:11px"></textarea></div>
+    <div class="fg"><label class="fl">Rate Limits (requests per minute per IP)</label>
+      <div class="fr2">
+        <div><label style="font-size:10px;color:rgba(255,255,255,.4)">Checkout</label><input id="rl-checkout" type="number" class="fi" value="10"/></div>
+        <div><label style="font-size:10px;color:rgba(255,255,255,.4)">Contact Form</label><input id="rl-contact" type="number" class="fi" value="5"/></div>
+        <div><label style="font-size:10px;color:rgba(255,255,255,.4)">RSVP</label><input id="rl-rsvp" type="number" class="fi" value="5"/></div>
+        <div><label style="font-size:10px;color:rgba(255,255,255,.4)">Subscribe</label><input id="rl-subscribe" type="number" class="fi" value="20"/></div>
+      </div></div>
+    <div class="fg"><label class="fl"><input type="checkbox" id="prot-mfa" style="margin-right:8px"/>Require MFA for admin login (enforced at next sign-in)</label></div>
+  </div>
 </div>
 
 <div class="panel" id="panel-settings">
@@ -970,6 +1043,240 @@ async function exportCSV(table,cols){
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   toast('CSV exported ✦','ok');
 }
+
+
+
+/* ─────────────────── SEO & GEO ─────────────────── */
+async function loadSeo() {
+  var wrap = document.getElementById('seo-wrap');
+  wrap.innerHTML = '<div style="padding:20px;color:rgba(255,255,255,.3);font-size:12px">Loading…</div>';
+  var r = await getDB().from('seo_meta').select('*').order('page_path');
+  if (r.error) { wrap.innerHTML = '<div style="color:#c75c5c;padding:20px">Error: ' + r.error.message + '</div>'; return; }
+  if (!r.data || !r.data.length) { wrap.innerHTML = '<div style="padding:20px;color:rgba(255,255,255,.3)">No pages yet. Click + Add Page.</div>'; return; }
+  wrap.innerHTML = r.data.map(function(s) {
+    return '<div class="card" style="padding:20px;margin-bottom:12px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+        '<div><strong style="color:#B08A3C;font-size:13px;letter-spacing:1px">' + (s.page_path || '/') + '</strong></div>' +
+        '<div style="display:flex;gap:6px"><button class="btn btn-s" onclick="editSeo(\'' + s.id + '\')">Edit</button><button class="btn btn-s" onclick="delSeo(\'' + s.id + '\')" style="color:#c75c5c">Delete</button></div>' +
+      '</div>' +
+      '<div style="font-size:12px;color:rgba(255,255,255,.7);margin-bottom:4px"><strong>Title:</strong> ' + (s.title || '—') + '</div>' +
+      '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-bottom:4px"><strong>Description:</strong> ' + (s.description || '—') + '</div>' +
+      '<div style="font-size:11px;color:rgba(176,138,60,.8);margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.05)"><strong>AI Summary (GEO):</strong> ' + (s.ai_summary || '—') + '</div>' +
+    '</div>';
+  }).join('');
+}
+async function addSeoPage() { return editSeo(null); }
+async function editSeo(id) {
+  var existing = null;
+  if (id) { var r = await getDB().from('seo_meta').select('*').eq('id', id).single(); existing = r.data; }
+  var m = document.getElementById('modal-overlay');
+  m.innerHTML = '<div class="modal"><div class="modal-head"><h2>' + (id ? 'Edit' : 'Add') + ' Page SEO</h2><button class="x" onclick="closeModal()">✕</button></div><div class="modal-body">' +
+    '<div class="fg"><label class="fl">Page Path (e.g. /, /shop.html)</label><input id="seo-path" class="fi" value="' + (existing && existing.page_path || '') + '"/></div>' +
+    '<div class="fg"><label class="fl">Page Title (<60 chars)</label><input id="seo-title" class="fi" maxlength="80" value="' + (existing && (existing.title || '').replace(/"/g,'&quot;') || '') + '"/></div>' +
+    '<div class="fg"><label class="fl">Meta Description (<160 chars)</label><textarea id="seo-desc" class="fi" rows="2" maxlength="200">' + (existing && existing.description || '') + '</textarea></div>' +
+    '<div class="fg"><label class="fl">Keywords (comma separated)</label><input id="seo-kw" class="fi" value="' + (existing && (existing.keywords || '').replace(/"/g,'&quot;') || '') + '"/></div>' +
+    '<div class="fg"><label class="fl">OG Image URL</label><input id="seo-og" class="fi" value="' + (existing && (existing.og_image || '').replace(/"/g,'&quot;') || '') + '"/></div>' +
+    '<div class="fg"><label class="fl" style="color:#B08A3C">AI Summary for ChatGPT/Claude/Perplexity (GEO — <300 chars)</label><textarea id="seo-ai" class="fi" rows="3" maxlength="300" placeholder="Factual one-line summary of this page">' + (existing && existing.ai_summary || '') + '</textarea></div>' +
+    '</div><div class="modal-foot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveSeo(\'' + (id || '') + '\')">Save</button></div></div>';
+  m.classList.add('open');
+}
+async function saveSeo(id) {
+  var data = {
+    page_path: document.getElementById('seo-path').value.trim(),
+    title: document.getElementById('seo-title').value.trim(),
+    description: document.getElementById('seo-desc').value.trim(),
+    keywords: document.getElementById('seo-kw').value.trim(),
+    og_image: document.getElementById('seo-og').value.trim(),
+    ai_summary: document.getElementById('seo-ai').value.trim(),
+    updated_at: new Date().toISOString(),
+  };
+  if (!data.page_path) { toast('Page path required', 'err'); return; }
+  var r = id
+    ? await getDB().from('seo_meta').update(data).eq('id', id)
+    : await getDB().from('seo_meta').insert(data);
+  if (r.error) { toast('Save failed: ' + r.error.message, 'err'); return; }
+  toast('Saved ✦', 'ok'); closeModal(); loadSeo();
+}
+async function delSeo(id) {
+  if (!confirm('Delete this page SEO?')) return;
+  var r = await getDB().from('seo_meta').delete().eq('id', id);
+  if (r.error) { toast(r.error.message, 'err'); return; }
+  toast('Deleted', 'ok'); loadSeo();
+}
+
+/* ─────────────────── RAG / Artello ─────────────────── */
+async function loadRag() {
+  var wrap = document.getElementById('rag-wrap');
+  var cat = document.getElementById('rag-filter').value;
+  var search = (document.getElementById('rag-search').value || '').toLowerCase();
+  var q = getDB().from('rag_knowledge').select('*').order('priority', { ascending: false });
+  if (cat) q = q.eq('category', cat);
+  var r = await q;
+  if (r.error) { wrap.innerHTML = '<div style="color:#c75c5c;padding:20px">' + r.error.message + '</div>'; return; }
+  var rows = (r.data || []).filter(function(k) {
+    if (!search) return true;
+    return (k.question + ' ' + k.answer + ' ' + (k.keywords || []).join(' ')).toLowerCase().indexOf(search) >= 0;
+  });
+  if (!rows.length) { wrap.innerHTML = '<div style="padding:20px;color:rgba(255,255,255,.3)">No matching knowledge. Click + Add Knowledge.</div>'; return; }
+  wrap.innerHTML = rows.map(function(k) {
+    return '<div class="card" style="padding:18px;margin-bottom:10px">' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:8px">' +
+        '<div><span style="background:rgba(176,138,60,.15);color:#B08A3C;padding:3px 8px;font-size:9px;letter-spacing:2px;text-transform:uppercase">' + k.category + '</span>' +
+        (k.is_active ? '' : '<span style="margin-left:6px;color:#c75c5c;font-size:10px">INACTIVE</span>') + '</div>' +
+        '<div style="display:flex;gap:6px"><button class="btn btn-s" onclick="editRag(\'' + k.id + '\')">Edit</button><button class="btn btn-s" onclick="delRag(\'' + k.id + '\')" style="color:#c75c5c">Delete</button></div>' +
+      '</div>' +
+      '<div style="font-size:13px;color:#fff;margin-bottom:6px"><strong>Q:</strong> ' + k.question + '</div>' +
+      '<div style="font-size:12px;color:rgba(255,255,255,.65);line-height:1.5"><strong>A:</strong> ' + k.answer + '</div>' +
+    '</div>';
+  }).join('');
+}
+async function addRagEntry() { return editRag(null); }
+async function editRag(id) {
+  var existing = null;
+  if (id) { var r = await getDB().from('rag_knowledge').select('*').eq('id', id).single(); existing = r.data; }
+  var m = document.getElementById('modal-overlay');
+  var cats = ['brand','products','brewing','pairing','events','shipping','gifting','faq','policy'];
+  m.innerHTML = '<div class="modal"><div class="modal-head"><h2>' + (id ? 'Edit' : 'Add') + ' Knowledge</h2><button class="x" onclick="closeModal()">✕</button></div><div class="modal-body">' +
+    '<div class="fg"><label class="fl">Category</label><select id="rag-cat" class="fi">' + cats.map(function(c){ return '<option' + (existing && existing.category === c ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select></div>' +
+    '<div class="fg"><label class="fl">Question</label><input id="rag-q" class="fi" value="' + (existing && (existing.question||'').replace(/"/g,'&quot;') || '') + '"/></div>' +
+    '<div class="fg"><label class="fl">Answer (Artello cites this verbatim)</label><textarea id="rag-a" class="fi" rows="4">' + (existing && existing.answer || '') + '</textarea></div>' +
+    '<div class="fg"><label class="fl">Keywords (comma separated — helps matching)</label><input id="rag-kw" class="fi" value="' + (existing && (existing.keywords || []).join(', ') || '') + '"/></div>' +
+    '<div class="fr2"><div class="fg"><label class="fl">Priority (0-100)</label><input id="rag-pri" type="number" class="fi" value="' + (existing && existing.priority || 50) + '"/></div>' +
+    '<div class="fg"><label class="fl"><input type="checkbox" id="rag-active"' + (!existing || existing.is_active ? ' checked' : '') + '/> Active</label></div></div>' +
+    '</div><div class="modal-foot"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveRag(\'' + (id || '') + '\')">Save</button></div></div>';
+  m.classList.add('open');
+}
+async function saveRag(id) {
+  var kw = document.getElementById('rag-kw').value.split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+  var data = {
+    category: document.getElementById('rag-cat').value,
+    question: document.getElementById('rag-q').value.trim(),
+    answer: document.getElementById('rag-a').value.trim(),
+    keywords: kw,
+    priority: parseInt(document.getElementById('rag-pri').value) || 0,
+    is_active: document.getElementById('rag-active').checked,
+    updated_at: new Date().toISOString(),
+  };
+  if (!data.question || !data.answer) { toast('Question and answer required', 'err'); return; }
+  var r = id
+    ? await getDB().from('rag_knowledge').update(data).eq('id', id)
+    : await getDB().from('rag_knowledge').insert(data);
+  if (r.error) { toast('Save failed: ' + r.error.message, 'err'); return; }
+  toast('Saved ✦', 'ok'); closeModal(); loadRag();
+}
+async function delRag(id) {
+  if (!confirm('Delete this knowledge entry?')) return;
+  var r = await getDB().from('rag_knowledge').delete().eq('id', id);
+  if (r.error) { toast(r.error.message, 'err'); return; }
+  toast('Deleted', 'ok'); loadRag();
+}
+
+/* ─────────────────── Admin Users ─────────────────── */
+async function loadUsers() {
+  var wrap = document.getElementById('users-wrap');
+  var r = await getDB().from('admin_profiles').select('*').order('created_at');
+  if (r.error) { wrap.innerHTML = '<div style="color:#c75c5c;padding:20px">' + r.error.message + '</div>'; return; }
+  if (!r.data || !r.data.length) { wrap.innerHTML = '<div style="padding:20px;color:rgba(255,255,255,.3)">No admins yet.</div>'; return; }
+  wrap.innerHTML = '<div class="card" style="padding:0"><table style="width:100%;border-collapse:collapse"><thead><tr style="background:rgba(10,61,58,.3);color:rgba(176,138,60,.9);font-size:10px;letter-spacing:2px;text-transform:uppercase"><th style="padding:14px;text-align:left">Email</th><th style="padding:14px;text-align:left">Role</th><th style="padding:14px;text-align:left">Active</th><th style="padding:14px;text-align:right">Actions</th></tr></thead><tbody>' +
+    r.data.map(function(u) {
+      return '<tr style="border-top:1px solid rgba(255,255,255,.05)"><td style="padding:14px;font-size:12px">' + u.email + '</td>' +
+        '<td style="padding:14px"><select onchange="setUserRole(\'' + u.id + '\', this.value)" class="fi" style="max-width:120px">' +
+          ['owner','editor','viewer'].map(function(r){ return '<option' + (u.role === r ? ' selected' : '') + '>' + r + '</option>'; }).join('') +
+        '</select></td>' +
+        '<td style="padding:14px"><input type="checkbox"' + (u.active ? ' checked' : '') + ' onchange="setUserActive(\'' + u.id + '\', this.checked)"/></td>' +
+        '<td style="padding:14px;text-align:right"><button class="btn btn-s" onclick="delUser(\'' + u.id + '\', \'' + u.email + '\')" style="color:#c75c5c">Remove</button></td></tr>';
+    }).join('') + '</tbody></table></div>';
+}
+async function setUserRole(id, role) {
+  var r = await getDB().from('admin_profiles').update({ role: role }).eq('id', id);
+  if (r.error) { toast(r.error.message, 'err'); return; }
+  toast('Role updated', 'ok');
+}
+async function setUserActive(id, active) {
+  var r = await getDB().from('admin_profiles').update({ active: active }).eq('id', id);
+  if (r.error) { toast(r.error.message, 'err'); return; }
+  toast(active ? 'Activated' : 'Deactivated', 'ok');
+}
+async function delUser(id, email) {
+  if (!confirm('Remove admin access for ' + email + '? The auth account stays in Supabase.')) return;
+  var r = await getDB().from('admin_profiles').delete().eq('id', id);
+  if (r.error) { toast(r.error.message, 'err'); return; }
+  toast('Removed', 'ok'); loadUsers();
+}
+function addAdminUser() {
+  alert('Step 1: Supabase Dashboard → Authentication → Users → Add user → enter email + password\n\nStep 2: Come back here — the new user appears automatically as "viewer". Change their role in the dropdown.');
+}
+
+/* ─────────────────── API Logs ─────────────────── */
+async function loadLogs() {
+  var wrap = document.getElementById('logs-wrap');
+  var filter = document.getElementById('log-filter').value;
+  var q = getDB().from('api_logs').select('*').order('ts', { ascending: false }).limit(100);
+  if (filter) q = q.eq('action', filter);
+  var r = await q;
+  if (r.error) { wrap.innerHTML = '<div style="color:#c75c5c;padding:20px">' + r.error.message + '</div>'; return; }
+  if (!r.data || !r.data.length) { wrap.innerHTML = '<div style="padding:20px;color:rgba(255,255,255,.3)">No logs yet. Logs appear as the Edge Function runs.</div>'; return; }
+  wrap.innerHTML = '<div class="card" style="padding:0"><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:rgba(10,61,58,.3);color:rgba(176,138,60,.9);font-size:9px;letter-spacing:2px;text-transform:uppercase"><th style="padding:10px;text-align:left">Time</th><th style="padding:10px;text-align:left">Action</th><th style="padding:10px;text-align:left">IP</th><th style="padding:10px;text-align:left">OK</th><th style="padding:10px;text-align:left">Details</th></tr></thead><tbody>' +
+    r.data.map(function(l) {
+      return '<tr style="border-top:1px solid rgba(255,255,255,.05)"><td style="padding:10px;color:rgba(255,255,255,.5);font-family:monospace">' + new Date(l.ts).toLocaleString() + '</td>' +
+        '<td style="padding:10px">' + (l.action || '—') + '</td>' +
+        '<td style="padding:10px;font-family:monospace;color:rgba(255,255,255,.4)">' + (l.ip_address || '—') + '</td>' +
+        '<td style="padding:10px">' + (l.success ? '<span style="color:#8dd4a3">✓</span>' : '<span style="color:#c75c5c">✗</span>') + '</td>' +
+        '<td style="padding:10px;color:rgba(255,255,255,.5);font-size:10px">' + (l.error_message || JSON.stringify(l.metadata || {}).slice(0,100)) + '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+}
+
+/* ─────────────────── Site Protection ─────────────────── */
+async function loadProtection() {
+  var r = await getDB().from('site_protection').select('key,value');
+  if (r.error) { toast(r.error.message, 'err'); return; }
+  var s = {};
+  (r.data || []).forEach(function(x) { s[x.key] = x.value; });
+  var m = s.maintenance_mode || { enabled: false, message: '' };
+  document.getElementById('prot-maint').checked = !!m.enabled;
+  document.getElementById('prot-maint-msg').value = m.message || '';
+  document.getElementById('prot-origins').value = (s.allowed_origins || []).join('\n');
+  document.getElementById('prot-emails').value = (s.blocked_emails || []).join('\n');
+  document.getElementById('prot-ips').value = (s.blocked_ips || []).join('\n');
+  var rl = s.rate_limits || {};
+  document.getElementById('rl-checkout').value = rl.checkout || 10;
+  document.getElementById('rl-contact').value = rl.contact || 5;
+  document.getElementById('rl-rsvp').value = rl.rsvp || 5;
+  document.getElementById('rl-subscribe').value = rl.subscribe || 20;
+  document.getElementById('prot-mfa').checked = !!s.require_mfa;
+}
+async function saveProtection() {
+  function splitLines(v) { return (v || '').split('\n').map(function(s){ return s.trim(); }).filter(Boolean); }
+  var updates = [
+    { key: 'maintenance_mode', value: { enabled: document.getElementById('prot-maint').checked, message: document.getElementById('prot-maint-msg').value } },
+    { key: 'allowed_origins', value: splitLines(document.getElementById('prot-origins').value) },
+    { key: 'blocked_emails',  value: splitLines(document.getElementById('prot-emails').value) },
+    { key: 'blocked_ips',     value: splitLines(document.getElementById('prot-ips').value) },
+    { key: 'rate_limits',     value: {
+      checkout:  parseInt(document.getElementById('rl-checkout').value)  || 10,
+      contact:   parseInt(document.getElementById('rl-contact').value)   || 5,
+      rsvp:      parseInt(document.getElementById('rl-rsvp').value)      || 5,
+      subscribe: parseInt(document.getElementById('rl-subscribe').value) || 20,
+    }},
+    { key: 'require_mfa',     value: document.getElementById('prot-mfa').checked },
+  ];
+  for (var i = 0; i < updates.length; i++) {
+    var r = await getDB().from('site_protection').upsert(updates[i], { onConflict: 'key' });
+    if (r.error) { toast('Save failed: ' + r.error.message, 'err'); return; }
+  }
+  toast('Site protection saved ✦', 'ok');
+}
+
+/* Hook new panels into showPanel */
+var _origShowPanel = showPanel;
+showPanel = function(id) {
+  _origShowPanel(id);
+  if (id === 'seo') loadSeo();
+  if (id === 'rag') loadRag();
+  if (id === 'users') loadUsers();
+  if (id === 'logs') loadLogs();
+  if (id === 'protection') loadProtection();
+};
 
 /* BOOT */
 (async function(){

@@ -1,0 +1,105 @@
+// netlify/functions/seo-feed.js
+// Generates sitemap.xml, robots.txt, and llms.txt dynamically from Supabase.
+// Routes (set in netlify.toml redirects):
+//   /sitemap.xml  →  /.netlify/functions/seo-feed?type=sitemap
+//   /robots.txt   →  /.netlify/functions/seo-feed?type=robots
+//   /llms.txt     →  /.netlify/functions/seo-feed?type=llms
+
+const SITE = 'https://teatapler.com';
+
+async function sbGet(path) {
+  const res = await fetch(`${process.env.SUPABASE_URL}/rest/v1/${path}`, {
+    headers: {
+      'apikey': process.env.SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`,
+    },
+  });
+  return res.ok ? res.json() : [];
+}
+
+function xmlEscape(s) {
+  return String(s || '').replace(/[<>&'"]/g, c => ({ '<':'&lt;','>':'&gt;','&':'&amp;',"'":'&apos;','"':'&quot;' }[c]));
+}
+
+exports.handler = async (event) => {
+  const type = event.queryStringParameters?.type || 'sitemap';
+
+  if (type === 'robots') {
+    const body = `User-agent: *
+Allow: /
+Disallow: /teatapler-admin.html
+Disallow: /admin.html
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+Sitemap: ${SITE}/sitemap.xml
+`;
+    return { statusCode: 200, headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'public, max-age=3600' }, body };
+  }
+
+  if (type === 'llms') {
+    const seo = await sbGet('seo_meta?select=page_path,title,ai_summary');
+    const products = await sbGet('products?select=name,slug,description,base_price,status&status=eq.published');
+    const plans = await sbGet('subscription_plans?select=name,price_monthly,price_yearly,description&status=eq.published');
+    const knowledge = await sbGet('rag_knowledge?select=category,question,answer,priority&is_active=eq.true&order=priority.desc&limit=50');
+
+    const lines = [];
+    lines.push('# TeaTapler');
+    lines.push('');
+    lines.push('> A luxury tea maison offering curated single-origin teas, heritage blends, bespoke atelier pairings, and monthly membership tiers. Tagline: "Indulge in the Elegance of Tea".');
+    lines.push('');
+    lines.push('## About');
+    lines.push('TeaTapler sources rare teas, delivers them with editorial storytelling, and offers three membership tiers plus one-time purchases, gift cards, and private tasting events.');
+    lines.push('');
+    lines.push('## Pages');
+    (seo || []).forEach(s => lines.push(`- [${s.title}](${SITE}${s.page_path}): ${s.ai_summary || ''}`));
+    lines.push('');
+    lines.push('## Products');
+    (products || []).forEach(p => lines.push(`- **${p.name}** ($${p.base_price}): ${(p.description || '').slice(0, 200)}`));
+    lines.push('');
+    lines.push('## Memberships');
+    (plans || []).forEach(p => lines.push(`- **${p.name}** — $${p.price_monthly}/mo, $${p.price_yearly || Math.round(p.price_monthly*12*0.9)}/yr: ${p.description || ''}`));
+    lines.push('');
+    lines.push('## FAQ');
+    (knowledge || []).forEach(k => { lines.push(`### ${k.question}`); lines.push(k.answer); lines.push(''); });
+    lines.push('## Contact');
+    lines.push('hello@teatapler.com · https://teatapler.com');
+
+    return { statusCode: 200, headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'public, max-age=3600' }, body: lines.join('\n') };
+  }
+
+  // sitemap
+  const seo = await sbGet('seo_meta?select=page_path,updated_at');
+  const products = await sbGet('products?select=slug,updated_at&status=eq.published');
+  const events = await sbGet('events?select=id,updated_at&status=eq.published');
+  const posts = await sbGet('journal_posts?select=slug,updated_at&status=eq.published');
+
+  const urls = [];
+  (seo || []).forEach(s => urls.push({ loc: `${SITE}${s.page_path}`, lastmod: s.updated_at, priority: s.page_path === '/' ? '1.0' : '0.8' }));
+  (products || []).forEach(p => urls.push({ loc: `${SITE}/shop.html?p=${p.slug}`, lastmod: p.updated_at, priority: '0.7' }));
+  (events || []).forEach(e => urls.push({ loc: `${SITE}/events.html?e=${e.id}`, lastmod: e.updated_at, priority: '0.6' }));
+  (posts || []).forEach(p => urls.push({ loc: `${SITE}/journal.html?slug=${p.slug}`, lastmod: p.updated_at, priority: '0.5' }));
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.map(u => `  <url><loc>${xmlEscape(u.loc)}</loc>${u.lastmod ? `<lastmod>${new Date(u.lastmod).toISOString().slice(0,10)}</lastmod>` : ''}<priority>${u.priority}</priority></url>`).join('\n')}
+</urlset>`;
+
+  return { statusCode: 200, headers: { 'Content-Type': 'application/xml; charset=utf-8', 'Cache-Control': 'public, max-age=3600' }, body: xml };
+};

@@ -1,6 +1,65 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta name="sb-anon" content="YOUR_ANON_KEY_HERE">
+<!-- Dynamic SEO/GEO loader -->
+<script>
+(function(){
+  var SB_URL = 'https://uzzgjdcjkpdccnlpviab.supabase.co';
+  var SB_KEY = document.querySelector('meta[name="sb-anon"]');
+  SB_KEY = SB_KEY ? SB_KEY.content : null;
+  var path = location.pathname === '/' || location.pathname.endsWith('/index.html') ? '/' : location.pathname;
+  if (!SB_KEY) return;
+  fetch(SB_URL + '/rest/v1/seo_meta?page_path=eq.' + encodeURIComponent(path) + '&select=*', {
+    headers: { apikey: SB_KEY, Authorization: 'Bearer ' + SB_KEY }
+  }).then(function(r){ return r.json(); }).then(function(d){
+    if (!Array.isArray(d) || !d.length) return;
+    var s = d[0];
+    if (s.title) document.title = s.title;
+    function setMeta(name, content, isProperty) {
+      if (!content) return;
+      var sel = isProperty ? 'meta[property="' + name + '"]' : 'meta[name="' + name + '"]';
+      var el = document.querySelector(sel);
+      if (!el) { el = document.createElement('meta'); el[isProperty ? 'setAttribute' : 'setAttribute'](isProperty ? 'property' : 'name', name); document.head.appendChild(el); }
+      el.content = content;
+    }
+    setMeta('description', s.description);
+    setMeta('keywords', s.keywords);
+    setMeta('robots', s.robots || 'index,follow');
+    setMeta('og:title', s.title, true);
+    setMeta('og:description', s.description, true);
+    setMeta('og:image', s.og_image, true);
+    setMeta('og:url', 'https://teatapler.com' + path, true);
+    setMeta('twitter:card', 'summary_large_image');
+    setMeta('twitter:title', s.title);
+    setMeta('twitter:description', s.description);
+    // AI summary for GPTBot/Claude/Perplexity
+    if (s.ai_summary) setMeta('ai-summary', s.ai_summary);
+  }).catch(function(){});
+})();
+</script>
+<!-- Organization schema for AI/search -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "TeaTapler",
+  "url": "https://teatapler.com",
+  "logo": "https://teatapler.com/logo.png",
+  "description": "Luxury tea maison offering curated single-origin teas, heritage blends, and bespoke atelier pairings.",
+  "sameAs": [
+    "https://instagram.com/teatapler",
+    "https://facebook.com/teatapler",
+    "https://linkedin.com/company/teatapler"
+  ],
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "email": "hello@teatapler.com",
+    "contactType": "Customer Service"
+  }
+}
+</script>
+
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <meta name="description" content="TeaTapler — Indulge in the Elegance of Tea. Pre-order exclusive teas and Sidr honey pairings."/>
